@@ -28,6 +28,19 @@ int main(int argc, char ** argv)
             [](cl_event, cl_int, void *) { std::cout << "Kernel finished!" << std::endl; },
             nullptr
         );
+
+        cl_event marker;
+        clEnqueueMarkerWithWaitList(
+            sycl_queue.get(),
+            0,
+            nullptr,
+            &marker);
+        clSetEventCallback(
+            marker,
+            CL_COMPLETE,
+            [](cl_event, cl_int, void *) { std::cout << "Marker ready!" << std::endl; },
+            nullptr
+        );
         
         {
             // Shift by one on host
