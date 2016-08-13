@@ -1,3 +1,4 @@
+#include <iostream>
 #include <algorithm>
 #include <SYCL/sycl.hpp>
 
@@ -12,6 +13,10 @@ int main(int argc, char ** argv)
     { 
         buffer<int, 1> buf(data, range<1>(size));
         /** Shift by one **/
+        auto host_acc_prev = buf.get_access<
+                        access::mode::read_write,
+                        access::target::host_buffer
+                    >();
         sycl_queue.submit([&](handler & cgh) {
             auto acc = buf.get_access<access::mode::write>(cgh);
             cgh.parallel_for<class shift>(range<1>(size),
@@ -20,7 +25,13 @@ int main(int argc, char ** argv)
                 }
             );
         });
-        
+        sycl_queue.wait();
+        std::cout << "After kernel, before acc creation: " << host_acc_prev[0] << std::endl;
+        auto host_acc_next = buf.get_access<
+                        access::mode::read_write,
+                        access::target::host_buffer
+                    >();
+        std::cout << "After kernel, after acc creation: " << host_acc_next[0] << std::endl;
         {
             // Shift by one on host
             auto host_acc = buf.get_access<
